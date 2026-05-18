@@ -495,7 +495,7 @@
           <li>Download the PDF and send it to the printer.</li>
         </ol>
         <p>Use the GitHub Pages URL in the QR field. That is the link customers should scan.</p>
-        <p>If the PDF button fails, the most likely cause is the external PDF library not loading. In that case, open the browser console or use a local copy of the library instead of the CDN.</p>
+        <p>If the PDF button fails, the export now uses a clean hidden copy of the menu. If it still errors, the problem is usually a browser extension, blocked CDN asset, or a broken image source in the page.</p>
         <p>Do not use a local file path. That is useless once the menu leaves your laptop.</p>
       </div>
     </div>
@@ -847,42 +847,65 @@
     }
 
     function downloadPDF() {
-      const node = el("printArea");
-      const exporter = window.html2pdf;
+      const original = el("printArea");
+      const btn = el("downloadPdfBtn");
+      const originalText = btn.textContent;
 
-      if (!node) {
+      if (!original) {
         alert("Print area not found.");
         return;
       }
 
-      if (typeof exporter !== "function" && !exporter) {
-        alert("PDF library did not load. Check your internet connection or CDN access.");
-        return;
+      const pdfRoot = original.cloneNode(true);
+      pdfRoot.style.position = "fixed";
+      pdfRoot.style.left = "-10000px";
+      pdfRoot.style.top = "0";
+      pdfRoot.style.width = "794px";
+      pdfRoot.style.background = "#0b0b0b";
+
+      const qrBox = pdfRoot.querySelector(".qr-box");
+      if (qrBox) {
+        qrBox.innerHTML = `
+          <h4>Scan to open menu</h4>
+          <div style="background:#fff;color:#111;border-radius:16px;padding:18px;font-size:12px;line-height:1.55;word-break:break-word;">
+            <div style="font-weight:800;margin-bottom:8px;">QR LINK</div>
+            <div>${esc(data.qrValue || DEFAULT_QR)}</div>
+            <div style="margin-top:10px;">If the QR image fails to render in PDF, this link still works for printing.</div>
+          </div>
+        `;
       }
 
-      const btn = el("downloadPdfBtn");
-      const originalText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = "Preparing PDF...";
+      document.body.appendChild(pdfRoot);
 
       const opt = {
         margin: 0,
         filename: `${(data.restaurantName || "menu").replace(/[^a-z0-9]+/gi, "_").toLowerCase()}_menu.pdf`,
         image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: null, scrollY: 0 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: null,
+          scrollY: 0,
+          allowTaint: false,
+          foreignObjectRendering: false
+        },
         jsPDF: { unit: "in", format: "a4", orientation: "p" },
         pagebreak: { mode: ["avoid-all", "css", "legacy"] }
       };
 
+      btn.disabled = true;
+      btn.textContent = "Preparing PDF...";
+
       Promise.resolve()
-        .then(() => (window.html2pdf || exporter)().set(opt).from(node).save())
+        .then(() => html2pdf().set(opt).from(pdfRoot).save())
         .catch((err) => {
           console.error(err);
-          alert("PDF export failed. Check the browser console for details.");
+          alert("PDF export failed. This version uses a clean print clone, so check the browser console if it still errors.");
         })
         .finally(() => {
           btn.disabled = false;
           btn.textContent = originalText;
+          pdfRoot.remove();
         });
     }
 
