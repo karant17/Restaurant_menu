@@ -472,12 +472,12 @@
 
           <div class="btnbar">
             <button id="addSectionBtn">Add section</button>
-            <button id="downloadPdfBtn" class="ghost">Download PDF</button>
+            <button id="downloadPdfBtn" class="ghost">Download / Print PDF</button>
             <button id="saveBtn" class="secondary">Save</button>
             <button id="resetBtn" class="danger">Reset</button>
           </div>
 
-          <div class="pdf-note">The PDF button exports the preview exactly as shown. That is the print file.</div>
+          <div class="pdf-note">The button opens a clean print page. In the print dialog, choose Save as PDF or your printer.</div>
 
           <div id="sectionsEditor" style="margin-top:16px;"></div>
         </div>
@@ -496,7 +496,7 @@
           <li>Download the PDF and send it to the printer.</li>
         </ol>
         <p>Use the GitHub Pages URL in the QR field. That is the link customers should scan.</p>
-        <p>If the PDF button fails, the export now uses a clean hidden copy of the menu. If it still errors, the problem is usually a browser extension, blocked CDN asset, or a broken image source in the page.</p>
+        <p>The print flow is now independent of the live preview. If nothing appears, your browser is blocking popups. Allow popups for the site and try again.</p>
         <p>Do not use a local file path. That is useless once the menu leaves your laptop.</p>
       </div>
     </div>
@@ -848,134 +848,159 @@
     }
 
     function downloadPDF() {
-      try {
-        const btn = el("downloadPdfBtn");
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = "Preparing PDF...";
+      const win = window.open("", "_blank", "noopener,noreferrer,width=1200,height=900");
+      if (!win) {
+        alert("Popup blocked. Allow popups for this site, then try again.");
+        return;
+      }
 
-        const { jsPDF } = window.jspdf || {};
-        if (!jsPDF) {
-          alert("PDF library did not load.");
-          btn.disabled = false;
-          btn.textContent = originalText;
-          return;
-        }
+      const sectionsHtml = (data.sections || []).map((section) => `
+        <div class="section">
+          <h2>${esc(section.title || "Menu Items")}</h2>
+          ${section.note ? `<div class="note">${esc(section.note)}</div>` : ""}
+          ${(section.items || []).map((item) => `
+            <div class="item">
+              <div class="left">
+                <div class="name">${esc(item.name || "Item")}</div>
+                ${item.description ? `<div class="desc">${esc(item.description)}</div>` : ""}
+              </div>
+              <div class="price">${esc(item.price || "0")}</div>
+            </div>
+          `).join("")}
+        </div>
+      `).join("");
 
-        const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "p" });
-        const pageWidth = 210;
-        const pageHeight = 297;
-        const margin = 12;
-        const contentWidth = pageWidth - margin * 2;
-        let y = margin;
-
-        function addWrappedText(text, x, yPos, maxWidth, lineHeight, fontSize, style = "normal") {
-          pdf.setFont("helvetica", style);
-          pdf.setFontSize(fontSize);
-          const lines = pdf.splitTextToSize(String(text || ""), maxWidth);
-          pdf.text(lines, x, yPos);
-          return yPos + lines.length * lineHeight;
-        }
-
-        function ensureSpace(requiredHeight) {
-          if (y + requiredHeight > pageHeight - margin) {
-            pdf.addPage();
-            y = margin;
-          }
-        }
-
-        pdf.setTextColor(20, 20, 20);
-        pdf.setFillColor(245, 242, 235);
-        pdf.rect(0, 0, pageWidth, pageHeight, "F");
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(24);
-        pdf.text(data.restaurantName || "Restaurant Menu", pageWidth / 2, y + 6, { align: "center" });
-        y += 12;
-
-        y = addWrappedText(data.subtitle || "", margin, y, contentWidth, 6, 11, "normal") + 4;
-        y = addWrappedText(`Phone: ${data.phone || ""}`, margin, y, contentWidth, 5.5, 10, "normal") + 1;
-        y = addWrappedText(`Address: ${data.address || ""}`, margin, y, contentWidth, 5.5, 10, "normal") + 6;
-
-        pdf.setDrawColor(180, 170, 150);
-        pdf.line(margin, y, pageWidth - margin, y);
-        y += 8;
-
-        for (const section of data.sections) {
-          const itemCount = section.items?.length || 0;
-          const estimatedHeight = 16 + itemCount * 18;
-          ensureSpace(estimatedHeight);
-
-          pdf.setFont("helvetica", "bold");
-          pdf.setFontSize(16);
-          pdf.setTextColor(90, 70, 45);
-          pdf.text(section.title || "Menu Items", margin, y);
-          y += 6;
-
-          if (section.note) {
-            pdf.setTextColor(70, 70, 70);
-            y = addWrappedText(section.note, margin, y + 2, contentWidth, 5, 9, "normal") + 2;
-          } else {
-            y += 3;
-          }
-
-          for (const item of section.items || []) {
-            ensureSpace(18);
-            pdf.setTextColor(20, 20, 20);
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(12.5);
-            pdf.text(item.name || "Item", margin, y);
-
-            const priceText = String(item.price || "0");
-            pdf.text(priceText, pageWidth - margin, y, { align: "right" });
-
-            y += 4.5;
-            pdf.setFont("helvetica", "normal");
-            pdf.setTextColor(85, 85, 85);
-            const desc = item.description || "";
-            if (desc) {
-              y = addWrappedText(desc, margin, y + 2, contentWidth - 18, 4.8, 9, "normal") + 2;
-            } else {
-              y += 5;
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>${esc(data.restaurantName || "Menu")} - Print</title>
+          <style>
+            * { box-sizing: border-box; }
+            body {
+              margin: 0;
+              font-family: Arial, Helvetica, sans-serif;
+              background: #f5f1e8;
+              color: #1d1d1d;
             }
+            .page {
+              width: 210mm;
+              min-height: 297mm;
+              margin: 0 auto;
+              padding: 14mm;
+            }
+            .card {
+              background: white;
+              border: 1px solid #ddd2c2;
+              border-radius: 16px;
+              padding: 16mm;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 10mm;
+            }
+            .eyebrow {
+              letter-spacing: .28em;
+              text-transform: uppercase;
+              font-size: 11px;
+              color: #876a42;
+              margin-bottom: 5mm;
+            }
+            h1 {
+              margin: 0;
+              font-size: 28px;
+            }
+            .subtitle {
+              margin-top: 4mm;
+              font-size: 12px;
+              color: #555;
+              line-height: 1.5;
+            }
+            .contact {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 6mm;
+              margin: 8mm 0 10mm;
+              padding-top: 6mm;
+              border-top: 1px solid #e0d7c8;
+              color: #555;
+              font-size: 11px;
+            }
+            .section {
+              margin-bottom: 8mm;
+              break-inside: avoid;
+            }
+            .section h2 {
+              margin: 0 0 3mm;
+              font-size: 18px;
+              color: #7f612b;
+              font-family: Georgia, 'Times New Roman', serif;
+              text-decoration: underline;
+              text-underline-offset: 3px;
+            }
+            .note {
+              margin: 0 0 3mm;
+              color: #666;
+              font-size: 11px;
+            }
+            .item {
+              display: flex;
+              justify-content: space-between;
+              gap: 8mm;
+              border-bottom: 1px dashed #e5dccd;
+              padding: 3mm 0;
+            }
+            .item:last-child { border-bottom: none; }
+            .name { font-size: 13px; font-weight: 700; }
+            .desc { margin-top: 1.5mm; font-size: 10px; color: #666; line-height: 1.45; }
+            .price { font-size: 13px; font-weight: 700; white-space: nowrap; }
+            .qrline {
+              margin-top: 8mm;
+              font-size: 10px;
+              color: #666;
+              word-break: break-word;
+            }
+            @media print {
+              body { background: white; }
+              .page { padding: 0; width: auto; min-height: auto; }
+              .card { border: none; border-radius: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="page">
+            <div class="card">
+              <div class="header">
+                <div class="eyebrow">Menu</div>
+                <h1>${esc(data.restaurantName || "Restaurant Menu")}</h1>
+                <div class="subtitle">${esc(data.subtitle || "")}</div>
+              </div>
+              <div class="contact">
+                <div><strong>Phone:</strong> ${esc(data.phone || "")}</div>
+                <div><strong>Address:</strong> ${esc(data.address || "")}</div>
+              </div>
+              ${sectionsHtml}
+              <div class="qrline"><strong>QR link:</strong> ${esc(data.qrValue || DEFAULT_QR)}</div>
+            </div>
+          </div>
+          <script>
+            window.onload = function () {
+              setTimeout(function () {
+                window.focus();
+                window.print();
+              }, 300);
+            };
+          <\/script>
+        </body>
+        </html>
+      `;
 
-            pdf.setDrawColor(220, 214, 202);
-            pdf.line(margin, y, pageWidth - margin, y);
-            y += 4;
-          }
-
-          y += 4;
-        }
-
-        ensureSpace(35);
-        pdf.setDrawColor(180, 170, 150);
-        pdf.line(margin, y, pageWidth - margin, y);
-        y += 8;
-
-        pdf.setTextColor(20, 20, 20);
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(12);
-        pdf.text("Scan to open menu", margin, y);
-        y += 6;
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(9.5);
-        pdf.text(`QR link: ${data.qrValue || DEFAULT_QR}`, margin, y, { maxWidth: contentWidth });
-        y += 10;
-
-        pdf.setFontSize(9);
-        pdf.setTextColor(90, 90, 90);
-        pdf.text("Generated from the menu builder", margin, pageHeight - margin);
-
-        pdf.save(`${(data.restaurantName || "menu").replace(/[^a-z0-9]+/gi, "_").toLowerCase()}_menu.pdf`);
-
-        btn.disabled = false;
-        btn.textContent = originalText;
-      } catch (err) {
-        console.error(err);
-        alert("PDF export failed. Check the browser console for details.");
-        const btn = el("downloadPdfBtn");
-        btn.disabled = false;
-        btn.textContent = "Download PDF";
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+    }
 
     el("restaurantName").addEventListener("input", (e) => updateTopField("restaurantName", e.target.value));
     el("subtitle").addEventListener("input", (e) => updateTopField("subtitle", e.target.value));
