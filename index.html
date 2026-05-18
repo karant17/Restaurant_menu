@@ -465,7 +465,7 @@
           <div class="upload-box">
             <label>Import menu from Excel</label>
             <input id="excelFile" type="file" accept=".xlsx,.xls" />
-            <div class="hint">Use a sheet named <strong>Sheet1</strong> or the first sheet. Required columns are flexible. Best columns: <strong>Section</strong>, <strong>Item</strong>, <strong>Price</strong>, <strong>Description</strong>, <strong>Section Note</strong>.</div>
+            <div class="hint">Use a sheet named <strong>Sheet1</strong> or the first sheet. Only <strong>Item</strong> and <strong>Price</strong> are required. Optional columns: <strong>Section</strong>, <strong>Description</strong>, <strong>Section Note</strong>.</div>
             <div class="sample-note">If your Excel has many items, import it instead of typing them one by one. The code will group rows by section automatically.</div>
           </div>
 
@@ -495,6 +495,7 @@
           <li>Download the PDF and send it to the printer.</li>
         </ol>
         <p>Use the GitHub Pages URL in the QR field. That is the link customers should scan.</p>
+        <p>If the PDF button fails, the most likely cause is the external PDF library not loading. In that case, open the browser console or use a local copy of the library instead of the CDN.</p>
         <p>Do not use a local file path. That is useless once the menu leaves your laptop.</p>
       </div>
     </div>
@@ -793,9 +794,11 @@
     function rowsToSections(rows) {
       const map = new Map();
       const order = [];
+      const defaultSectionName = "Menu Items";
 
       rows.forEach((row) => {
-        const section = getField(row, ["Section", "Category", "Group", "Menu Section", "Heading"]) || "Uncategorized";
+        const rawSection = getField(row, ["Section", "Category", "Group", "Menu Section", "Heading"]);
+        const section = rawSection || defaultSectionName;
         const item = getField(row, ["Item", "Name", "Dish", "Product", "Menu Item"]);
         if (!item) return;
 
@@ -845,15 +848,42 @@
 
     function downloadPDF() {
       const node = el("printArea");
+      const exporter = window.html2pdf;
+
+      if (!node) {
+        alert("Print area not found.");
+        return;
+      }
+
+      if (typeof exporter !== "function" && !exporter) {
+        alert("PDF library did not load. Check your internet connection or CDN access.");
+        return;
+      }
+
+      const btn = el("downloadPdfBtn");
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Preparing PDF...";
+
       const opt = {
         margin: 0,
         filename: `${(data.restaurantName || "menu").replace(/[^a-z0-9]+/gi, "_").toLowerCase()}_menu.pdf`,
         image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: null },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: null, scrollY: 0 },
         jsPDF: { unit: "in", format: "a4", orientation: "p" },
         pagebreak: { mode: ["avoid-all", "css", "legacy"] }
       };
-      html2pdf().set(opt).from(node).save();
+
+      Promise.resolve()
+        .then(() => (window.html2pdf || exporter)().set(opt).from(node).save())
+        .catch((err) => {
+          console.error(err);
+          alert("PDF export failed. Check the browser console for details.");
+        })
+        .finally(() => {
+          btn.disabled = false;
+          btn.textContent = originalText;
+        });
     }
 
     el("restaurantName").addEventListener("input", (e) => updateTopField("restaurantName", e.target.value));
