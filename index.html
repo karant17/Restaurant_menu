@@ -5,48 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Restaurant Menu Builder</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
-      --bg: #080808;
-      --panel: #171717;
-      --text: #f2f2f2;
-      --muted: #b7b7b7;
+      --bg: #050505;
+      --panel: #151515;
+      --panel-2: #1b1b1b;
       --line: rgba(255,255,255,0.08);
+      --text: #f4f4f4;
+      --muted: #b9b9b9;
       --accent: #a8ff2d;
+      --accent2: #76d900;
+      --paper: #f8f6f1;
       --danger: #ef6666;
-      --shadow: 0 16px 40px rgba(0,0,0,0.32);
       --radius: 22px;
+      --shadow: 0 16px 40px rgba(0,0,0,0.35);
     }
 
     * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
-      background:
-        radial-gradient(circle at top, rgba(168,255,45,0.08), transparent 24%),
-        linear-gradient(180deg, #0c0c0c 0%, #1c1c1c 100%);
       color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(168,255,45,0.07), transparent 24%),
+        linear-gradient(180deg, #0b0b0b 0%, #141414 100%);
     }
 
     .wrap {
-      max-width: 1480px;
+      max-width: 1500px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 18px;
       display: grid;
-      grid-template-columns: minmax(430px, 1.05fr) minmax(480px, 0.95fr);
+      grid-template-columns: minmax(440px, 1fr) minmax(520px, 1fr);
       gap: 18px;
       align-items: start;
     }
 
     .panel, .preview-shell, .help {
-      border: 1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow: hidden;
       background: var(--panel);
+      border: 1px solid var(--line);
     }
 
     .header {
@@ -54,36 +55,20 @@
       background: linear-gradient(180deg, #101010 0%, #1a1a1a 100%);
       border-bottom: 1px solid var(--line);
     }
-
-    .header h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-      line-height: 1.1;
-    }
-
-    .header p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.55;
-      font-size: 14px;
-    }
+    .header h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.1; }
+    .header p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 14px; }
 
     .content { padding: 18px; }
-
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
     label {
       display: block;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: .08em;
-      color: #cfcfcf;
       margin: 0 0 6px;
+      color: #d5d5d5;
+      font-size: 11px;
+      letter-spacing: .08em;
       text-transform: uppercase;
+      font-weight: 800;
     }
 
     input, textarea, select {
@@ -92,263 +77,156 @@
       border-radius: 14px;
       padding: 11px 13px;
       font: inherit;
-      background: #fdfdfd;
+      background: #fafafa;
       color: #111;
       outline: none;
     }
-
     textarea { min-height: 74px; resize: vertical; }
     input:focus, textarea:focus, select:focus {
-      border-color: rgba(168,255,45,0.75);
-      box-shadow: 0 0 0 3px rgba(168,255,45,0.10);
+      border-color: rgba(168,255,45,0.8);
+      box-shadow: 0 0 0 3px rgba(168,255,45,0.1);
     }
 
-    .btnbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 14px 0 18px;
+    .upload-box {
+      margin: 14px 0 16px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px dashed rgba(255,255,255,0.16);
     }
+    .hint { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 
+    .btnbar { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 12px; }
     button {
-      border: none;
+      border: 0;
       border-radius: 14px;
       padding: 11px 14px;
-      font: inherit;
       cursor: pointer;
-      background: var(--accent);
-      color: #0d1200;
+      font: inherit;
       font-weight: 800;
+      background: var(--accent);
+      color: #101101;
     }
-
-    button.secondary {
-      background: #2b2b2b;
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    button.ghost {
-      background: #ece7da;
-      color: #222;
-    }
-
-    button.danger {
-      background: var(--danger);
-      color: #fff;
-    }
-
-    button.small {
-      padding: 8px 10px;
-      border-radius: 12px;
-      font-size: 13px;
-    }
+    button.secondary { background: #2b2b2b; color: #fff; border: 1px solid rgba(255,255,255,0.08); }
+    button.ghost { background: #ece7da; color: #222; }
+    button.danger { background: var(--danger); color: #fff; }
+    button.small { padding: 8px 10px; border-radius: 12px; font-size: 13px; }
 
     .section {
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
       padding: 14px;
       margin-bottom: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
     }
-
     .section-top, .item-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;
     }
-
-    .section-title {
-      font-size: 16px;
-      font-weight: 900;
-      color: var(--accent);
-      letter-spacing: .02em;
-    }
-
+    .section-title { color: var(--accent); font-size: 16px; font-weight: 900; }
     .items { display: grid; gap: 10px; }
-
     .item {
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 16px;
       padding: 12px;
     }
+    .item-grid { display: grid; grid-template-columns: 1.1fr 0.42fr 1fr 0.9fr; gap: 10px; }
+    .mini-note { margin-top: 4px; color: var(--muted); font-size: 12px; }
 
-    .item-grid {
-      display: grid;
-      grid-template-columns: 1.15fr 0.45fr 1fr;
-      gap: 10px;
-    }
-
-    .hint {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.55;
-      margin-top: 8px;
-    }
-
-    .upload-box {
-      border: 1px dashed rgba(255,255,255,0.18);
-      border-radius: 18px;
-      padding: 14px;
-      margin: 14px 0 18px;
-      background: rgba(255,255,255,0.03);
-    }
-
-    .preview-shell {
-      position: sticky;
-      top: 20px;
-      background: #111;
-    }
-
+    .preview-shell { position: sticky; top: 18px; background: #111; }
     .preview-toolbar {
-      display: flex;
-      gap: 10px;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(0,0,0,0.15);
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      padding: 14px 16px; border-bottom: 1px solid var(--line); background: rgba(0,0,0,0.18);
     }
-
-    .preview-toolbar .left, .preview-toolbar .right {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
     .preview-toolbar strong { font-size: 15px; }
+    .preview-toolbar .sub { color: var(--muted); font-size: 13px; }
 
     .menu-preview {
+      padding: 16px;
       background:
-        radial-gradient(circle at center, rgba(255,255,255,0.02) 0 1px, transparent 1px) 0 0 / 24px 24px,
-        linear-gradient(180deg, #0b0b0b 0%, #151515 100%);
-      padding: 18px;
+        radial-gradient(circle at center, rgba(255,255,255,0.03) 0 1px, transparent 1px) 0 0 / 24px 24px,
+        linear-gradient(180deg, #0c0c0c 0%, #141414 100%);
     }
 
     .menu-page {
-      min-height: 1120px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01)),
-        radial-gradient(circle at center, rgba(168,255,45,0.04), transparent 32%),
-        #0b0b0b;
-      border: 1px solid rgba(255,255,255,0.08);
+      min-height: 1180px;
+      border: 1px solid rgba(255,255,255,0.10);
       border-radius: 24px;
       overflow: hidden;
       position: relative;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(255,255,255,0.04), transparent 42%),
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.03), transparent 18%),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.03), transparent 18%),
+        linear-gradient(180deg, #060606 0%, #101010 100%);
       color: #efefef;
-      padding: 28px;
+      padding: 26px 22px 22px;
     }
-
     .menu-page::before {
       content: "";
       position: absolute;
       inset: 0;
       background:
-        repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 50px),
-        repeating-linear-gradient(-45deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 60px);
-      opacity: 0.22;
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 56px),
+        repeating-linear-gradient(-45deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 64px);
+      opacity: 0.25;
       pointer-events: none;
     }
-
-    .menu-inner {
-      position: relative;
-      z-index: 1;
+    .menu-page::after {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 2px solid rgba(200, 220, 220, 0.45);
+      border-radius: 18px;
+      pointer-events: none;
     }
+    .menu-inner { position: relative; z-index: 1; }
 
-    .menu-header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
+    .menu-header { text-align: center; padding: 6px 0 16px; }
     .menu-header .eyebrow {
-      font-size: 12px;
-      letter-spacing: .35em;
+      color: var(--accent);
+      font-size: 13px;
+      letter-spacing: .25em;
       text-transform: uppercase;
-      color: #d9d9d9;
+      font-weight: 800;
       margin-bottom: 6px;
     }
-
     .menu-header h2 {
       margin: 0;
-      font-size: 40px;
-      line-height: 1.05;
-      letter-spacing: .04em;
+      font-size: 42px;
+      line-height: 1.02;
       color: #fff;
+      letter-spacing: .02em;
     }
+    .menu-header p { margin: 10px 0 0; color: #cfcfcf; font-size: 14px; line-height: 1.5; }
 
-    .menu-header p {
-      margin: 10px 0 0;
-      color: #d3d3d3;
-      line-height: 1.5;
-      font-size: 14px;
-    }
-
-    .menu-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px 24px;
-    }
-
-    .menu-section {
-      break-inside: avoid;
-      page-break-inside: avoid;
-      margin-bottom: 4px;
-    }
-
+    .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
+    .menu-section { break-inside: avoid; page-break-inside: avoid; position: relative; }
     .menu-section h3 {
       margin: 0 0 10px;
       color: var(--accent);
       font-size: 24px;
       font-style: italic;
       text-decoration: underline;
-      text-underline-offset: 5px;
+      text-underline-offset: 4px;
       font-family: Georgia, 'Times New Roman', serif;
+      line-height: 1.05;
     }
-
-    .section-note {
-      margin-top: -6px;
-      margin-bottom: 10px;
-      color: #bfbfbf;
-      font-size: 13px;
-      line-height: 1.45;
-    }
+    .section-note { margin: -3px 0 10px; color: #bfbfbf; font-size: 12px; line-height: 1.45; }
 
     .menu-item {
-      display: flex;
-      gap: 16px;
-      justify-content: space-between;
-      align-items: flex-start;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+      padding: 8px 0;
       border-bottom: 1px dashed rgba(255,255,255,0.12);
-      padding: 9px 0;
     }
-
     .menu-item:last-child { border-bottom: none; }
-
-    .menu-item .name {
-      font-size: 20px;
-      font-weight: 800;
-      color: #f1f1f1;
-      line-height: 1.15;
-    }
-
-    .menu-item .desc {
-      margin-top: 4px;
-      font-size: 12px;
-      line-height: 1.45;
-      color: #bdbdbd;
-    }
-
-    .menu-item .price {
-      font-size: 20px;
-      font-weight: 900;
-      color: var(--accent);
-      white-space: nowrap;
-      padding-left: 8px;
-      min-width: 72px;
-      text-align: right;
+    .menu-item .left { flex: 1; min-width: 0; }
+    .menu-item .name { font-size: 18px; font-weight: 800; color: #f1f1f1; line-height: 1.15; }
+    .menu-item .desc { margin-top: 3px; color: #bdbdbd; font-size: 12px; line-height: 1.4; }
+    .menu-item .price { font-size: 18px; font-weight: 900; color: var(--accent); white-space: nowrap; min-width: 54px; text-align: right; }
+    .thumb {
+      width: 54px; height: 54px; border-radius: 14px; object-fit: cover; flex: 0 0 auto;
+      border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06);
     }
 
     .bottom-row {
@@ -358,69 +236,37 @@
       gap: 16px;
       align-items: start;
     }
-
     .contact-box, .qr-box {
-      border: 1px solid rgba(255,255,255,0.10);
       border-radius: 18px;
       background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.10);
       padding: 14px;
     }
-
-    .contact-box h4, .qr-box h4 {
-      margin: 0 0 8px;
-      color: #fff;
-      font-size: 16px;
-    }
-
-    .contact-box p {
-      margin: 5px 0;
-      color: #d7d7d7;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
+    .contact-box h4, .qr-box h4 { margin: 0 0 8px; color: #fff; font-size: 16px; }
+    .contact-box p { margin: 5px 0; color: #d7d7d7; font-size: 13px; line-height: 1.5; }
     .qr-box { text-align: center; }
-    #qrcode {
-      display: inline-block;
-      padding: 10px;
-      background: #fff;
-      border-radius: 16px;
-      margin-top: 8px;
-    }
+    #qrcode { display: inline-block; padding: 10px; border-radius: 16px; background: #fff; margin-top: 8px; }
 
-    .help {
-      margin-top: 18px;
-      padding: 18px;
-    }
-
+    .help { margin-top: 18px; padding: 18px; }
     .help h3 { margin-top: 0; }
     .help p, .help li { color: #e9e9e9; line-height: 1.6; }
     .help code { background: #222; padding: 2px 6px; border-radius: 6px; }
 
-    .pdf-note {
-      color: var(--accent);
-      font-weight: 800;
-      font-size: 13px;
-    }
-
-    .sample-note {
-      color: #fff;
-      font-size: 13px;
-      line-height: 1.5;
-      margin-top: 8px;
-    }
+    .pdf-note { color: var(--accent); font-weight: 800; font-size: 13px; margin-top: 2px; }
 
     @media (max-width: 1100px) {
       .wrap { grid-template-columns: 1fr; }
       .preview-shell { position: static; }
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 760px) {
       .grid2, .item-grid, .menu-grid, .bottom-row { grid-template-columns: 1fr; }
-      .menu-page { padding: 18px; }
-      .menu-header h2 { font-size: 32px; }
-      .menu-item .name, .menu-item .price { font-size: 18px; }
+      .menu-header h2 { font-size: 34px; }
+      .menu-page { padding: 18px 14px; }
+      .menu-item .name, .menu-item .price { font-size: 16px; }
     }
+
+    /* Print window styling uses inline CSS in JS too, this is for the preview only. */
   </style>
 </head>
 <body>
@@ -429,7 +275,7 @@
       <div class="panel">
         <div class="header">
           <h1>Print-Ready Menu Builder</h1>
-          <p>Built for a GitHub Pages workflow. Add sections manually or import them from Excel Sheet1, preview the layout, generate a QR code, then download a PDF for printing.</p>
+          <p>Editable restaurant menu with Excel import, live preview, QR code, and a print flow that saves cleanly as PDF.</p>
         </div>
 
         <div class="content">
@@ -453,8 +299,8 @@
             <div>
               <label>Theme</label>
               <select id="theme">
-                <option value="dark">Dark premium</option>
-                <option value="light">Light brochure</option>
+                <option value="dark">Dark floral</option>
+                <option value="light">Pastel brochure</option>
               </select>
             </div>
             <div>
@@ -466,8 +312,7 @@
           <div class="upload-box">
             <label>Import menu from Excel</label>
             <input id="excelFile" type="file" accept=".xlsx,.xls" />
-            <div class="hint">Use a sheet named <strong>Sheet1</strong> or the first sheet. Only <strong>Item</strong> and <strong>Price</strong> are required. Optional columns: <strong>Section</strong>, <strong>Description</strong>, <strong>Section Note</strong>.</div>
-            <div class="sample-note">If your Excel has many items, import it instead of typing them one by one. The code will group rows by section automatically.</div>
+            <div class="hint">Only <strong>Item</strong> and <strong>Price</strong> are required. Optional columns: <strong>Section</strong>, <strong>Description</strong>, <strong>Section Note</strong>, <strong>Image URL</strong>. If <strong>Section</strong> is missing, rows go into <strong>Menu Items</strong>.</div>
           </div>
 
           <div class="btnbar">
@@ -477,40 +322,36 @@
             <button id="resetBtn" class="danger">Reset</button>
           </div>
 
-          <div class="pdf-note">The button opens a clean print page. In the print dialog, choose Save as PDF or your printer.</div>
+          <div class="pdf-note">The button opens a clean print view. In the print dialog, choose Save as PDF.</div>
 
           <div id="sectionsEditor" style="margin-top:16px;"></div>
         </div>
       </div>
 
       <div class="help">
-        <h3>How to host this on GitHub Pages</h3>
+        <h3>How to host on GitHub Pages</h3>
         <ol>
           <li>Create a GitHub repository.</li>
-          <li>Add a file named <code>index.html</code>.</li>
-          <li>Paste this full code into it and commit.</li>
+          <li>Add one file named <code>index.html</code>.</li>
+          <li>Paste this full code and commit to <code>main</code>.</li>
           <li>Go to <code>Settings → Pages</code>.</li>
           <li>Choose <code>Deploy from a branch</code>, then select <code>main</code> and <code>/root</code>.</li>
-          <li>Wait for the public GitHub Pages URL.</li>
-          <li>Open that URL and build the menu.</li>
-          <li>Download the PDF and send it to the printer.</li>
+          <li>Open the GitHub Pages URL after it publishes.</li>
+          <li>Build the menu, import Excel if needed, then click <code>Download / Print PDF</code>.</li>
         </ol>
-        <p>Use the GitHub Pages URL in the QR field. That is the link customers should scan.</p>
-        <p>The print flow is now independent of the live preview. If nothing appears, your browser is blocking popups. Allow popups for the site and try again.</p>
-        <p>Do not use a local file path. That is useless once the menu leaves your laptop.</p>
+        <p>Use the live GitHub Pages URL in the QR field. Do not use a local file path. That is useless for customers.</p>
       </div>
     </div>
 
     <div class="preview-shell">
       <div class="preview-toolbar">
-        <div class="left">
+        <div>
           <strong>Live preview</strong>
-          <span class="muted">Menu style based on your reference images</span>
+          <div class="sub">Dark floral restaurant style inspired by your sample</div>
         </div>
-        <div class="right">
-          <span class="muted">Use this for print and QR</span>
-        </div>
+        <div class="sub">Use this for print and QR</div>
       </div>
+
       <div class="menu-preview">
         <div id="printArea" class="menu-page">
           <div class="menu-inner">
@@ -527,12 +368,12 @@
                 <h4>Contact</h4>
                 <p id="previewAddress">12, Palm Avenue, Mumbai</p>
                 <p id="previewPhone">+91 98765 43210</p>
-                <p class="muted">Edit the menu, save it, and export the preview as a PDF for printing.</p>
+                <p style="color:#bdbdbd;font-size:12px;line-height:1.5;margin-top:8px;">Edit the menu, save it in the browser, export to PDF, and print.</p>
               </div>
               <div class="qr-box">
                 <h4>Scan to open menu</h4>
                 <div id="qrcode"></div>
-                <p class="muted" style="margin:10px 0 0;">This QR points to your live menu link.</p>
+                <p style="color:#bdbdbd;font-size:12px;line-height:1.5;margin-top:8px;">This QR points to your live menu link.</p>
               </div>
             </div>
           </div>
@@ -542,8 +383,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "restaurant_menu_builder_v3";
+    const STORAGE_KEY = "restaurant_menu_builder_v4";
     const DEFAULT_QR = "https://your-live-menu-link.com";
+    const DEFAULT_IMAGE = "";
 
     const defaultData = {
       restaurantName: "Casa Verde Bistro",
@@ -557,18 +399,18 @@
           title: "Chinese",
           note: "Popular quick bites and noodle items.",
           items: [
-            { name: "Chicken Fried Rice", price: "80", description: "Classic wok rice with vegetables and sauce." },
-            { name: "Chicken Noodles", price: "80", description: "Stir-fried noodles with chicken and peppers." },
-            { name: "Mixed Fried Rice", price: "100", description: "Rice tossed with assorted vegetables and protein." }
+            { name: "Chicken Fried Rice", price: "80", description: "Classic wok rice with vegetables and sauce.", imageUrl: "" },
+            { name: "Chicken Noodles", price: "80", description: "Stir-fried noodles with chicken and peppers.", imageUrl: "" },
+            { name: "Mixed Fried Rice", price: "100", description: "Rice tossed with assorted vegetables and protein.", imageUrl: "" }
           ]
         },
         {
           title: "Briyani",
           note: "Serve hot with onion and raita.",
           items: [
-            { name: "Plain", price: "60", description: "Fragrant rice cooked with mild spices." },
-            { name: "Chicken", price: "120", description: "Chicken biryani with layered masala rice." },
-            { name: "Tandoori", price: "140", description: "Rich biryani topped with tandoori chicken." }
+            { name: "Plain", price: "60", description: "Fragrant rice cooked with mild spices.", imageUrl: "" },
+            { name: "Chicken", price: "120", description: "Chicken biryani with layered masala rice.", imageUrl: "" },
+            { name: "Tandoori", price: "140", description: "Rich biryani topped with tandoori chicken.", imageUrl: "" }
           ]
         }
       ]
@@ -581,25 +423,17 @@
     const previewSections = el("previewSections");
     const qrcodeEl = el("qrcode");
 
-    function clone(obj) {
-      return JSON.parse(JSON.stringify(obj));
-    }
-
+    function clone(v) { return JSON.parse(JSON.stringify(v)); }
     function loadData() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
         return saved ? JSON.parse(saved) : clone(defaultData);
-      } catch {
-        return clone(defaultData);
-      }
+      } catch { return clone(defaultData); }
     }
-
-    function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    }
+    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
     function esc(s) {
-      return String(s)
+      return String(s ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
@@ -617,40 +451,43 @@
       el("qrValue").value = data.qrValue;
     }
 
+    function themeAccent() {
+      return data.theme === "light" ? "#8a6a2f" : "#a8ff2d";
+    }
+
+    function themePaperBg() {
+      return data.theme === "light" ? "#f7f1e6" : "#060606";
+    }
+
     function renderQR() {
       qrcodeEl.innerHTML = "";
-      const safe = data.qrValue && data.qrValue.trim() ? data.qrValue : " ";
-      new QRCode(qrcodeEl, {
-        text: safe,
-        width: 180,
-        height: 180,
-        correctLevel: QRCode.CorrectLevel.M
-      });
+      const safe = (data.qrValue || DEFAULT_QR).trim() || DEFAULT_QR;
+      new QRCode(qrcodeEl, { text: safe, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
     }
 
     function renderPreview() {
-      el("previewName").textContent = data.restaurantName;
-      el("previewSubtitle").textContent = data.subtitle;
-      el("previewAddress").textContent = data.address;
-      el("previewPhone").textContent = data.phone;
-
-      document.documentElement.style.setProperty("--accent", data.theme === "light" ? "#856a2e" : "#a8ff2d");
-
+      document.documentElement.style.setProperty("--accent", themeAccent());
       previewSections.innerHTML = data.sections.map((section) => `
         <section class="menu-section">
-          <h3>${esc(section.title)}</h3>
+          <h3>${esc(section.title || "Menu Items")}</h3>
           ${section.note ? `<div class="section-note">${esc(section.note)}</div>` : ""}
-          ${section.items.map((item) => `
+          ${(section.items || []).map((item) => `
             <div class="menu-item">
-              <div>
-                <div class="name">${esc(item.name)}</div>
+              <div class="left">
+                <div class="name">${esc(item.name || "Item")}</div>
                 ${item.description ? `<div class="desc">${esc(item.description)}</div>` : ""}
               </div>
-              <div class="price">${esc(item.price)}</div>
+              ${item.imageUrl ? `<img class="thumb" src="${esc(item.imageUrl)}" alt="${esc(item.name || "Item")}">` : ""}
+              <div class="price">${esc(item.price || "0")}</div>
             </div>
           `).join("")}
         </section>
       `).join("");
+
+      el("previewName").textContent = data.restaurantName;
+      el("previewSubtitle").textContent = data.subtitle;
+      el("previewAddress").textContent = data.address;
+      el("previewPhone").textContent = data.phone;
     }
 
     function renderEditor() {
@@ -668,7 +505,7 @@
           <div class="grid2">
             <div>
               <label>Section title</label>
-              <input type="text" value="${esc(section.title)}" oninput="updateSectionField(${sIndex}, 'title', this.value)">
+              <input type="text" value="${esc(section.title || '')}" oninput="updateSectionField(${sIndex}, 'title', this.value)">
             </div>
             <div>
               <label>Section note</label>
@@ -691,15 +528,20 @@
                 <div class="item-grid">
                   <div>
                     <label>Name</label>
-                    <input type="text" value="${esc(item.name)}" oninput="updateItem(${sIndex}, ${iIndex}, 'name', this.value)">
+                    <input type="text" value="${esc(item.name || '')}" oninput="updateItem(${sIndex}, ${iIndex}, 'name', this.value)">
                   </div>
                   <div>
                     <label>Price</label>
-                    <input type="text" value="${esc(item.price)}" oninput="updateItem(${sIndex}, ${iIndex}, 'price', this.value)">
+                    <input type="text" value="${esc(item.price || '')}" oninput="updateItem(${sIndex}, ${iIndex}, 'price', this.value)">
                   </div>
                   <div>
                     <label>Description</label>
                     <textarea oninput="updateItem(${sIndex}, ${iIndex}, 'description', this.value)">${esc(item.description || '')}</textarea>
+                  </div>
+                  <div>
+                    <label>Image URL</label>
+                    <input type="text" value="${esc(item.imageUrl || '')}" oninput="updateItem(${sIndex}, ${iIndex}, 'imageUrl', this.value)" placeholder="Optional image link">
+                    <div class="mini-note">Optional. Use this if you want food photos.</div>
                   </div>
                 </div>
               </div>
@@ -725,12 +567,10 @@
       data[field] = value;
       renderAll();
     }
-
     function updateSectionField(sectionIndex, field, value) {
       data.sections[sectionIndex][field] = value;
       renderAll();
     }
-
     function updateItem(sectionIndex, itemIndex, field, value) {
       data.sections[sectionIndex].items[itemIndex][field] = value;
       renderAll();
@@ -739,36 +579,31 @@
     function addSection() {
       data.sections.push({
         title: "New Section",
-        note: "Add a short description if needed.",
-        items: [{ name: "New Item", price: "0", description: "Item description" }]
+        note: "",
+        items: [{ name: "New Item", price: "0", description: "", imageUrl: "" }]
       });
       renderAll();
     }
-
     function removeSection(index) {
       if (data.sections.length <= 1) return;
       data.sections.splice(index, 1);
       renderAll();
     }
-
     function moveSection(index, dir) {
       const target = index + dir;
       if (target < 0 || target >= data.sections.length) return;
       [data.sections[index], data.sections[target]] = [data.sections[target], data.sections[index]];
       renderAll();
     }
-
     function addItem(sectionIndex) {
-      data.sections[sectionIndex].items.push({ name: "New Item", price: "0", description: "Item description" });
+      data.sections[sectionIndex].items.push({ name: "New Item", price: "0", description: "", imageUrl: "" });
       renderAll();
     }
-
     function removeItem(sectionIndex, itemIndex) {
       if (data.sections[sectionIndex].items.length <= 1) return;
       data.sections[sectionIndex].items.splice(itemIndex, 1);
       renderAll();
     }
-
     function moveItem(sectionIndex, itemIndex, dir) {
       const items = data.sections[sectionIndex].items;
       const target = itemIndex + dir;
@@ -780,14 +615,11 @@
     function normalizeHeader(value) {
       return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
     }
-
     function getField(row, names) {
       const keys = Object.keys(row || {});
       for (const wanted of names) {
         const found = keys.find((k) => normalizeHeader(k) === normalizeHeader(wanted));
-        if (found && row[found] !== undefined && row[found] !== null && String(row[found]).trim() !== "") {
-          return String(row[found]).trim();
-        }
+        if (found && String(row[found]).trim() !== "") return String(row[found]).trim();
       }
       return "";
     }
@@ -795,67 +627,58 @@
     function rowsToSections(rows) {
       const map = new Map();
       const order = [];
-      const defaultSectionName = "Menu Items";
+      const fallback = "Menu Items";
 
       rows.forEach((row) => {
-        const rawSection = getField(row, ["Section", "Category", "Group", "Menu Section", "Heading"]);
-        const section = rawSection || defaultSectionName;
         const item = getField(row, ["Item", "Name", "Dish", "Product", "Menu Item"]);
         if (!item) return;
-
+        const section = getField(row, ["Section", "Category", "Group", "Menu Section", "Heading"]) || fallback;
         const price = getField(row, ["Price", "Rate", "Amount", "Cost"]) || "0";
         const description = getField(row, ["Description", "Desc", "Details", "Note", "Item Description"]);
         const sectionNote = getField(row, ["Section Note", "Category Note", "Group Note", "Note"]);
+        const imageUrl = getField(row, ["Image URL", "Image", "Photo", "Picture"]);
 
         if (!map.has(section)) {
           map.set(section, { title: section, note: sectionNote, items: [] });
           order.push(section);
         }
-
         const sec = map.get(section);
         if (!sec.note && sectionNote) sec.note = sectionNote;
-        sec.items.push({ name: item, price, description });
+        sec.items.push({ name: item, price, description, imageUrl });
       });
 
-      return order.map((section) => map.get(section)).filter((sec) => sec.items.length > 0);
+      return order.map((name) => map.get(name)).filter((sec) => sec.items.length > 0);
     }
 
     function importExcelFile(file) {
       const reader = new FileReader();
-      reader.onload = function (e) {
+      reader.onload = (e) => {
         try {
-          const dataArr = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(dataArr, { type: "array" });
-          const firstSheetName = workbook.SheetNames[0];
-          const sheet = workbook.Sheets[workbook.SheetNames.includes("Sheet1") ? "Sheet1" : firstSheetName];
+          const workbook = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
+          const sheetName = workbook.SheetNames.includes("Sheet1") ? "Sheet1" : workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
           const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
           const sections = rowsToSections(rows);
-
           if (!sections.length) {
-            alert("No usable rows found. Add columns like Section, Item, Price, Description.");
+            alert("No usable rows found. Use at least Item and Price columns.");
             return;
           }
-
           data.sections = sections;
           renderAll();
           alert(`Imported ${sections.length} section(s) from Excel.`);
         } catch (err) {
           console.error(err);
-          alert("Excel import failed. Check that the file is a valid .xlsx or .xls file.");
+          alert("Excel import failed. Check that the file is valid.");
         }
       };
       reader.readAsArrayBuffer(file);
     }
 
-    function downloadPDF() {
-      const win = window.open("", "_blank", "noopener,noreferrer,width=1200,height=900");
-      if (!win) {
-        alert("Popup blocked. Allow popups for this site, then try again.");
-        return;
-      }
-
-      const sectionsHtml = (data.sections || []).map((section) => `
-        <div class="section">
+    function buildPrintHtml() {
+      const accent = themeAccent();
+      const bg = themePaperBg();
+      const sectionsHtml = data.sections.map((section) => `
+        <section class="section">
           <h2>${esc(section.title || "Menu Items")}</h2>
           ${section.note ? `<div class="note">${esc(section.note)}</div>` : ""}
           ${(section.items || []).map((item) => `
@@ -864,125 +687,132 @@
                 <div class="name">${esc(item.name || "Item")}</div>
                 ${item.description ? `<div class="desc">${esc(item.description)}</div>` : ""}
               </div>
+              ${item.imageUrl ? `<img class="thumb" src="${esc(item.imageUrl)}" alt="${esc(item.name || "Item")}">` : ""}
               <div class="price">${esc(item.price || "0")}</div>
             </div>
           `).join("")}
-        </div>
+        </section>
       `).join("");
 
-      const html = `
+      return `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>${esc(data.restaurantName || "Menu")} - Print</title>
+          <title>${esc(data.restaurantName || "Menu")}</title>
           <style>
+            @page { size: A4; margin: 10mm; }
             * { box-sizing: border-box; }
             body {
               margin: 0;
               font-family: Arial, Helvetica, sans-serif;
-              background: #f5f1e8;
-              color: #1d1d1d;
+              background: ${bg};
+              color: #efefef;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
             .page {
-              width: 210mm;
-              min-height: 297mm;
+              width: 190mm;
+              min-height: 277mm;
               margin: 0 auto;
-              padding: 14mm;
+              border: 1px solid rgba(255,255,255,0.12);
+              border-radius: 18px;
+              background:
+                radial-gradient(circle at 50% 45%, rgba(255,255,255,0.04), transparent 42%),
+                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.03), transparent 18%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.03), transparent 18%),
+                linear-gradient(180deg, #060606 0%, #101010 100%);
+              padding: 12mm 10mm 10mm;
+              position: relative;
+              overflow: hidden;
             }
-            .card {
-              background: white;
-              border: 1px solid #ddd2c2;
-              border-radius: 16px;
-              padding: 16mm;
+            .page:before {
+              content: "";
+              position: absolute;
+              inset: 0;
+              background:
+                repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 56px),
+                repeating-linear-gradient(-45deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 64px);
+              opacity: 0.25;
+              pointer-events: none;
             }
-            .header {
-              text-align: center;
-              margin-bottom: 10mm;
+            .page:after {
+              content: "";
+              position: absolute;
+              inset: 8mm;
+              border: 2px solid rgba(200,220,220,0.45);
+              border-radius: 14px;
+              pointer-events: none;
             }
-            .eyebrow {
-              letter-spacing: .28em;
-              text-transform: uppercase;
-              font-size: 11px;
-              color: #876a42;
-              margin-bottom: 5mm;
-            }
-            h1 {
-              margin: 0;
-              font-size: 28px;
-            }
-            .subtitle {
-              margin-top: 4mm;
-              font-size: 12px;
-              color: #555;
-              line-height: 1.5;
-            }
-            .contact {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 6mm;
-              margin: 8mm 0 10mm;
-              padding-top: 6mm;
-              border-top: 1px solid #e0d7c8;
-              color: #555;
-              font-size: 11px;
-            }
-            .section {
-              margin-bottom: 8mm;
-              break-inside: avoid;
-            }
+            .inner { position: relative; z-index: 1; }
+            .header { text-align: center; padding-bottom: 6mm; }
+            .eyebrow { color: ${accent}; font-size: 11px; letter-spacing: .28em; text-transform: uppercase; font-weight: 800; }
+            h1 { margin: 3mm 0 1mm; font-size: 30px; color: #fff; }
+            .subtitle { color: #d0d0d0; font-size: 10.5px; line-height: 1.5; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm 8mm; }
+            .section { break-inside: avoid; page-break-inside: avoid; }
             .section h2 {
               margin: 0 0 3mm;
-              font-size: 18px;
-              color: #7f612b;
-              font-family: Georgia, 'Times New Roman', serif;
+              color: ${accent};
+              font-size: 20px;
+              font-style: italic;
               text-decoration: underline;
-              text-underline-offset: 3px;
+              text-underline-offset: 2px;
+              font-family: Georgia, 'Times New Roman', serif;
             }
-            .note {
-              margin: 0 0 3mm;
-              color: #666;
-              font-size: 11px;
-            }
+            .note { margin: -1mm 0 2.5mm; color: #bbb; font-size: 9.5px; line-height: 1.45; }
             .item {
-              display: flex;
-              justify-content: space-between;
-              gap: 8mm;
-              border-bottom: 1px dashed #e5dccd;
-              padding: 3mm 0;
+              display: flex; justify-content: space-between; gap: 4mm; align-items: flex-start;
+              border-bottom: 1px dashed rgba(255,255,255,0.12);
+              padding: 2.3mm 0;
             }
             .item:last-child { border-bottom: none; }
-            .name { font-size: 13px; font-weight: 700; }
-            .desc { margin-top: 1.5mm; font-size: 10px; color: #666; line-height: 1.45; }
-            .price { font-size: 13px; font-weight: 700; white-space: nowrap; }
-            .qrline {
-              margin-top: 8mm;
-              font-size: 10px;
-              color: #666;
-              word-break: break-word;
+            .left { flex: 1; min-width: 0; }
+            .name { font-size: 12.5px; font-weight: 800; color: #f1f1f1; }
+            .desc { margin-top: 1mm; font-size: 9px; color: #bdbdbd; line-height: 1.35; }
+            .price { color: ${accent}; font-size: 12.5px; font-weight: 900; white-space: nowrap; min-width: 12mm; text-align: right; }
+            .thumb { width: 13mm; height: 13mm; object-fit: cover; border-radius: 3mm; border: 1px solid rgba(255,255,255,0.12); }
+            .bottom { margin-top: 6mm; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 5mm; }
+            .box {
+              border: 1px solid rgba(255,255,255,0.10);
+              border-radius: 12px;
+              background: rgba(255,255,255,0.03);
+              padding: 4mm;
             }
+            .box h3 { margin: 0 0 2.5mm; font-size: 12px; color: #fff; }
+            .box p { margin: 1.5mm 0; font-size: 9.5px; color: #d7d7d7; line-height: 1.45; }
+            .qrtext { word-break: break-word; color: #eee; }
             @media print {
               body { background: white; }
-              .page { padding: 0; width: auto; min-height: auto; }
-              .card { border: none; border-radius: 0; }
+              .page { border: none; border-radius: 0; width: auto; min-height: auto; }
             }
           </style>
         </head>
         <body>
           <div class="page">
-            <div class="card">
+            <div class="inner">
               <div class="header">
                 <div class="eyebrow">Menu</div>
                 <h1>${esc(data.restaurantName || "Restaurant Menu")}</h1>
                 <div class="subtitle">${esc(data.subtitle || "")}</div>
               </div>
-              <div class="contact">
-                <div><strong>Phone:</strong> ${esc(data.phone || "")}</div>
-                <div><strong>Address:</strong> ${esc(data.address || "")}</div>
+
+              <div class="grid">
+                ${sectionsHtml}
               </div>
-              ${sectionsHtml}
-              <div class="qrline"><strong>QR link:</strong> ${esc(data.qrValue || DEFAULT_QR)}</div>
+
+              <div class="bottom">
+                <div class="box">
+                  <h3>Contact</h3>
+                  <p><strong>Phone:</strong> ${esc(data.phone || "")}</p>
+                  <p><strong>Address:</strong> ${esc(data.address || "")}</p>
+                </div>
+                <div class="box">
+                  <h3>Scan to open menu</h3>
+                  <p class="qrtext">${esc(data.qrValue || DEFAULT_QR)}</p>
+                </div>
+              </div>
             </div>
           </div>
           <script>
@@ -990,39 +820,64 @@
               setTimeout(function () {
                 window.focus();
                 window.print();
-              }, 300);
+              }, 800);
             };
           <\/script>
         </body>
         </html>
       `;
-
-      win.document.open();
-      win.document.write(html);
-      win.document.close();
     }
 
-    el("restaurantName").addEventListener("input", (e) => updateTopField("restaurantName", e.target.value));
-    el("subtitle").addEventListener("input", (e) => updateTopField("subtitle", e.target.value));
-    el("phone").addEventListener("input", (e) => updateTopField("phone", e.target.value));
-    el("address").addEventListener("input", (e) => updateTopField("address", e.target.value));
-    el("theme").addEventListener("change", (e) => updateTopField("theme", e.target.value));
-    el("qrValue").addEventListener("input", (e) => updateTopField("qrValue", e.target.value));
+    function downloadPDF() {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '1px';
+      iframe.style.height = '1px';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
 
-    el("excelFile").addEventListener("change", (e) => {
+      const html = buildPrintHtml();
+
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow.focus();
+          setTimeout(() => iframe.contentWindow.print(), 250);
+        } catch (err) {
+          console.error(err);
+          alert('Print window could not open.');
+        }
+      };
+
+      iframe.srcdoc = html;
+
+      const cleanup = () => {
+        try { iframe.remove(); } catch {}
+      };
+      window.addEventListener('afterprint', cleanup, { once: true });
+      setTimeout(cleanup, 30000);
+    }
+
+    el('restaurantName').addEventListener('input', e => updateTopField('restaurantName', e.target.value));
+    el('subtitle').addEventListener('input', e => updateTopField('subtitle', e.target.value));
+    el('phone').addEventListener('input', e => updateTopField('phone', e.target.value));
+    el('address').addEventListener('input', e => updateTopField('address', e.target.value));
+    el('theme').addEventListener('change', e => updateTopField('theme', e.target.value));
+    el('qrValue').addEventListener('input', e => updateTopField('qrValue', e.target.value));
+    el('excelFile').addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
       if (file) importExcelFile(file);
-      e.target.value = "";
+      e.target.value = '';
     });
 
-    el("addSectionBtn").addEventListener("click", addSection);
-    el("downloadPdfBtn").addEventListener("click", downloadPDF);
-    el("saveBtn").addEventListener("click", () => {
-      saveData();
-      alert("Saved in this browser.");
-    });
-    el("resetBtn").addEventListener("click", () => {
-      if (!confirm("Reset everything to default?")) return;
+    el('addSectionBtn').addEventListener('click', addSection);
+    el('downloadPdfBtn').addEventListener('click', downloadPDF);
+    el('saveBtn').addEventListener('click', () => { saveData(); alert('Saved in this browser.'); });
+    el('resetBtn').addEventListener('click', () => {
+      if (!confirm('Reset everything to default?')) return;
       data = clone(defaultData);
       localStorage.removeItem(STORAGE_KEY);
       renderAll();
